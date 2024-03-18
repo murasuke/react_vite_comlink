@@ -1,9 +1,9 @@
-# ComlinkでWeb Workerを非同期関数として呼び出す手順(React+vite)
+# ComlinkでWeb Workerを非同期関数として呼び出す(React+vite)
 
 ## はじめに
 
 以前、[create-react-app(TypeScript)で作成したアプリにWeb Workerを導入する方法](https://qiita.com/murasuke/items/897faa6b2e6e071bbcd0)
-という記事を書いたのですが、CRAは使わなくなってきたのでvite版の利用方法を調べました
+という記事(でComlinkの導入について)を書いたのですが、CRAは使わなくなってきたのでvite版の利用方法を調べました
 
 ### [Comlink](https://github.com/GoogleChromeLabs/comlink)とは
 
@@ -45,6 +45,8 @@ portMessageで呼び出す必要がある`Web Worker`を、非同期メソッド
 ```
 
 #### Comlinkを使う場合
+
+* 一般的な非同期関数としてWeb Workerの処理を呼び出すことができます
 
 ```tsx
   const workerRef = useRef<Remote<typeof import('./worker')> | null>(null);
