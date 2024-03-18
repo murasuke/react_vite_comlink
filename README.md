@@ -21,7 +21,53 @@ Googleが作成したライブラリです
 portMessageで呼び出す必要がある`Web Worker`を、非同期メソッドとして呼び出すことを可能にしてくれるライブラリ、といったイメージです
 
 
+#### Comlinkを使わない場合の、Web Worker呼び出しコード例
+
+* postMessage経由で処理を呼び出すため、見通しが悪くなります
+
+```tsx
+  const workerRef = useRef<Worker | null>(null);
+  useEffect(() => {
+    // Workerを生成
+    workerRef.current = new Worker();
+    // イベントで処理結果を受け取る
+    workerRef.current.onmessage = (event) => {
+      const data = event.data;
+      console.log('メインスレッドで受信:', data);
+    };
+
+  }, []);
+
+  // Web Worker 処理呼び出し(postMessage経由)
+  const handleClickWorker = () => {
+    workerRef.current.postMessage(roopCount);
+  };
+```
+
+#### Comlinkを使う場合
+
+```tsx
+  const workerRef = useRef<Remote<typeof import('./worker')> | null>(null);
+
+  useEffect(() => {
+    // Workerを生成
+    workerRef.current = new ComlinkWorker<typeof import('./worker')>(
+      new URL('./worker', import.meta.url)
+    );
+  }, []);
+
+  // comlinkにより、非同期関数化されます(awaitで完了の待ち合わせができる)
+  const handleClickWorker = async () => {
+    const result = await workerRef.current.workerBlockingFunc(roopCount);
+  };
+```
+
 ## 作成手順
+
+画面イメージ
+![img10](./img/img10.png)
+
+※「実行結果は・・・」はCSSアニメーションで左右に動いています。時間がかかる処理をWeb Workerで実行した場合、画面はブロックされません。
 
 ### プロジェクト作成
 * viteでReactプロジェクトを作成
@@ -92,6 +138,8 @@ export const blockingFunc = (iterations: number): number => {
 
 ### comlinkでWorker化する処理
 
+Web Workerとして呼び出す処理をworker.tsに記載します（時間がかかるテスト関数を呼び出すだけ）
+
 ```typescript:./src/worker.ts
 import { blockingFunc } from './blockingFunc';
 
@@ -104,11 +152,115 @@ export const workerBlockingFunc = (iterations: number): number => {
 
 ```
 
+### ReactからWeb Workerを呼び出す
+
+* Reactコンポーネントの`useEffect()`でWeb Workerを読み込む
+* ボタンクリックでWeb Workerの処理を呼び出す
+* 画面説明用ラベルをCSSアニメーションで左右に移動させる(ブロッキング確認のため)
+
+```typescript:./src/App.tsx
+import { useEffect, useRef } from 'react';
+import type { Remote } from 'comlink';
+import { blockingFunc } from './blockingFunc';
+import './App.css';
+
+function App() {
+  const roopCount = 300;
+  // ComlinkWorkerをuseRefで保持
+  const workerRef = useRef<Remote<typeof import('./worker')> | null>(null);
+
+  useEffect(() => {
+    // Workerを生成
+    workerRef.current = new ComlinkWorker<typeof import('./worker')>(
+      new URL('./worker', import.meta.url)
+    );
+  }, []);
+
+  // comlink(web worker)による非同期処理。アニメーションが止まらない
+  const handleClickWorker = async () => {
+    if (workerRef.current) {
+      console.log('start workerBlockingFunc()');
+      const result = await workerRef.current.workerBlockingFunc(roopCount);
+      console.log(`end workerBlockingFunc(): ${result}`);
+    }
+  };
+
+  // 同期処理(画面のアニメーションが止まる)
+  const handleClickSync = async () => {
+    if (workerRef.current) {
+      console.log('start blockingFunc()');
+      const result = blockingFunc(roopCount);
+      console.log(`end blockingFunc(): ${result}`);
+    }
+  };
+
+  return (
+    <div>
+      <button onClick={() => handleClickWorker()}>
+        時間がかかる関数をcomlinkで非同期的に実行
+      </button>
+      <br />
+      <button onClick={() => handleClickSync()}>
+        時間がかかる関数を同期的に実行
+      </button>
+      <div className="return">実行結果はDevToolsのConsoleに出力されます。</div>
+    </div>
+  );
+}
+
+export default App;
+```
+### CSSにアニメーション効果を追加
+
+画面描画がブロックされていることがわかるように、「実行結果は・・・」を左右にアニメーションさせる。
 
 
+```css:./src/App.css
+@keyframes return {
+  50% {
+    left: 200px;
+  }
+  100% {
+    left: 0px;
+  }
+}
+
+.return {
+  width:  320px;
+  position: relative;
+  left: 0px;
+  top: 0;
+
+  animation-name: return;
+  animation-duration: 3s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease;
+}
+
+```
+## 動作確認
+
+```bash
+$ npm run dev
+
+  VITE v5.1.5  ready in 191 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help
+```
+* コンソールを開いてから、ボタンをクリックすると各処理の流れを追うことができます
+  * App.tsxからの呼び出し
+  * Web Workerで実行
+  * 2秒後にApp.tsxで処理結果を受け取る
+  * 処理中、画面描画はブロックされない（アニメーションがなめらかに動作し続ける）
+
+  ![img20](./img/img20.png)
+
+※「時間がかかる関数を同期的に実行」ボタンをクリックすると、画面が一時停止します
 
 
-
+## 参考
 
 https://www.npmjs.com/package/vite-plugin-comlink
 

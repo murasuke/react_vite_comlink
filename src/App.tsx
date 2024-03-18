@@ -5,7 +5,7 @@ import './App.css';
 
 function App() {
   const roopCount = 300;
-  // ComlinkWorkerを保持
+  // ComlinkWorkerをuseRefで保持
   const workerRef = useRef<Remote<typeof import('./worker')> | null>(null);
 
   useEffect(() => {
