@@ -1,4 +1,4 @@
-# Web Workerを非同期関数として呼び出すことができるComlinkをReact(+vite)に導入する手順
+# ComlinkでWeb Workerを非同期関数として呼び出す手順(React+vite)
 
 ## はじめに
 
