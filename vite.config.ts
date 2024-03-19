@@ -8,5 +8,8 @@ export default defineConfig({
   plugins: [comlink(), react()],
   worker: {
     plugins: [comlink()],
+    build: {
+      sourcemap: "hidden",
+    }
   },
 });
