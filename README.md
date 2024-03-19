@@ -64,6 +64,8 @@ portMessageで呼び出す必要がある`Web Worker`を、非同期メソッド
   };
 ```
 
+https://github.com/murasuke/react_vite_comlink
+
 ## 作成手順
 
 画面イメージ
