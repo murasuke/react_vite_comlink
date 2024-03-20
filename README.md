@@ -82,7 +82,7 @@ $ cd react_vite_web_worker
 $ code .
 ```
 
-### comlinをインストール
+### comlinkをインストール
 
 * comlinkをインストールする
 ```bash
