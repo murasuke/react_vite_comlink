@@ -86,7 +86,7 @@ $ code .
 
 * comlinkをインストールする
 ```bash
-$ npm i complink
+$ npm i comlink
 $ npm i -D vite-plugin-comlink
 ```
 
